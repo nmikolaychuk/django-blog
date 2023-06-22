@@ -7,6 +7,12 @@ TEXT_FIELD_MAX_LENGTH = 250
 STATUS_FIELD_MAX_LENGTH = 2
 
 
+class PublishedManager(models.Manager):
+    """Модельный менеджер для извлечения опубликованных постов."""
+    def get_queryset(self):
+        return super().get_queryset().filter(status=Post.Status.PUBLISHED)
+
+
 class Post(models.Model):
     """Пост блога."""
 
@@ -23,6 +29,8 @@ class Post(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     status = models.CharField(max_length=STATUS_FIELD_MAX_LENGTH, choices=Status.choices, default=Status.DRAFT)
+    objects = models.Manager()
+    published_posts = PublishedManager()
 
     class Meta:
         ordering = ['-published']
