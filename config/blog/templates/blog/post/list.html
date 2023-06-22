@@ -8,7 +8,7 @@
     <h1>Мой блог</h1>
     {% for post in posts %}
         <h2>
-            <a href="{% url 'blog:post_detail' post.id %}">
+            <a href="{{ post.get_absolute_url }}">
                 {{ post.title }}
             </a>
         </h2>
@@ -17,4 +17,5 @@
             Published {{ post.published }} by {{ post.author }}
         </p>
     {% endfor %}
+    {% include "blog/pagination.html" with page=posts %}
 {% endblock %}
