@@ -1,4 +1,5 @@
 {% extends "blog/base.html" %}
+{% load comments_extras %}
 
 {% block title %}
     {{ post.title }}
@@ -15,4 +16,26 @@
             Поделиться
         </a>
     </p>
+
+    {% with comments.count as total_comments %}
+        <h2>
+            {{ total_comments }} комментари{{ total_comments|ru_pluralize:"й,я,ев" }}
+        </h2>
+    {% endwith %}
+
+    {% for comment in comments %}
+        <div class="comment">
+            <p class="info">
+                Комментарий {{ forloop.counter }} от пользователя {{ comment.name }}
+                {{ comment.created }}
+            </p>
+            {{ comment.body|linebreaks }}
+        </div>
+    {% empty %}
+        <p>
+            Здесь еще нет комментариев.
+        </p>
+    {% endfor %}
+
+    {% include "blog/post/includes/comment_form.html" %}
 {% endblock %}

@@ -5,6 +5,7 @@ from django.urls import reverse
 
 
 TEXT_FIELD_MAX_LENGTH = 250
+NAME_FIELD_MAX_LENGTH = 80
 STATUS_FIELD_MAX_LENGTH = 2
 
 
@@ -16,20 +17,24 @@ class PublishedManager(models.Manager):
 
 class Post(models.Model):
     """Пост блога."""
-
     class Status(models.TextChoices):
         """Статус поста."""
         DRAFT = 'DF', 'Draft'
         PUBLISHED = 'PB', 'Published'
 
-    title = models.CharField(max_length=TEXT_FIELD_MAX_LENGTH)
-    slug = models.SlugField(max_length=TEXT_FIELD_MAX_LENGTH, unique_for_date='published')
-    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='blog_posts')
-    body = models.TextField()
-    published = models.DateTimeField(default=timezone.now)
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-    status = models.CharField(max_length=STATUS_FIELD_MAX_LENGTH, choices=Status.choices, default=Status.DRAFT)
+    title = models.CharField(max_length=TEXT_FIELD_MAX_LENGTH, verbose_name='Title')
+    slug = models.SlugField(max_length=TEXT_FIELD_MAX_LENGTH, unique_for_date='published', verbose_name='Slug')
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='blog_posts', verbose_name='Author')
+    body = models.TextField(verbose_name='Post content')
+    published = models.DateTimeField(default=timezone.now, verbose_name='Published datetime')
+    created = models.DateTimeField(auto_now_add=True, verbose_name='Created datetime')
+    updated = models.DateTimeField(auto_now=True, verbose_name='Updated datetime')
+    status = models.CharField(
+        max_length=STATUS_FIELD_MAX_LENGTH,
+        choices=Status.choices,
+        default=Status.DRAFT,
+        verbose_name='Post status'
+    )
     objects = models.Manager()
     published_posts = PublishedManager()
 
@@ -53,3 +58,23 @@ class Post(models.Model):
                 self.slug,
             ]
         )
+
+
+class Comment(models.Model):
+    """Комментарий под опубликованным постом."""
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments', verbose_name='Post')
+    name = models.CharField(max_length=NAME_FIELD_MAX_LENGTH, verbose_name='Author')
+    body = models.TextField(verbose_name='Content')
+    email = models.EmailField(verbose_name='Email')
+    created = models.DateTimeField(auto_now_add=True, verbose_name='Created datetime')
+    updated = models.DateTimeField(auto_now=True, verbose_name='Updated datetime')
+    active = models.BooleanField(default=True, verbose_name='Comment active status')
+
+    class Meta:
+        ordering = ['created']
+        indexes = [
+            models.Index(fields=['created'])
+        ]
+
+    def __str__(self):
+        return f"Комментарий к посту {self.post} от пользователя {self.name}"
