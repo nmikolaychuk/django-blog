@@ -1,4 +1,6 @@
 {% load static %}
+{% load comments_extras %}
+{% load blog_extras %}
 
 <!doctype html>
 <html lang="en">
@@ -20,7 +22,9 @@
     </div>
     <div id="sidebar">
         <h2>Блог</h2>
-        <p>Отличный блог.</p>
+        <p>
+            Написано постов за всё время: {% total_posts %} шт.
+        </p>
     </div>
 </body>
 </html>

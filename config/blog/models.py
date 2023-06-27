@@ -3,6 +3,8 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 from django.urls import reverse
 
+from taggit.managers import TaggableManager
+
 
 TEXT_FIELD_MAX_LENGTH = 250
 NAME_FIELD_MAX_LENGTH = 80
@@ -37,6 +39,7 @@ class Post(models.Model):
     )
     objects = models.Manager()
     published_posts = PublishedManager()
+    tags = TaggableManager()
 
     class Meta:
         ordering = ['-published']

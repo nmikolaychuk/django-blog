@@ -4,18 +4,28 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.mail import send_mail
 from django.conf import settings
 from django.views.decorators.http import require_POST
+from django.db.models import Count
 
+from taggit.models import Tag
+
+from typing import Optional
 from .models import Post
 from .forms import EmailPostForm, CommentPostForm
 
 
 POSTS_ON_LIST = 2
 FIRST_PAGE_NUMBER = 1
+SIMILAR_POSTS_COUNT = 3
 
 
-def show_post_list(request: HttpRequest) -> HttpResponse:
+def show_post_list(request: HttpRequest, tag_slug: Optional[str] = None) -> HttpResponse:
     """Отобразить список постов и их содержимого."""
     post_list = Post.published_posts.all()
+    tag = None
+    if tag_slug:
+        tag = get_object_or_404(Tag, slug=tag_slug)
+        post_list = post_list.filter(tags__in=[tag])
+
     paginator = Paginator(object_list=post_list, per_page=POSTS_ON_LIST)
     page_number = request.GET.get('page', FIRST_PAGE_NUMBER)
     try:
@@ -29,6 +39,7 @@ def show_post_list(request: HttpRequest) -> HttpResponse:
         template_name='blog/post/list.html',
         context={
             'posts': posts,
+            'tag': tag,
         },
     )
 
@@ -47,11 +58,18 @@ def show_post_detail(request: HttpRequest, year: int, month: int, day: int, post
     comments = post.comments.filter(active=True)
     # Форма для комментирования.
     form = CommentPostForm()
+    # Список схожих постов.
+    post_tags_ids = post.tags.values_list('id', flat=True)
+    similar_posts = Post.published_posts.filter(tags__in=post_tags_ids).exclude(id=post.id)
+    similar_posts = similar_posts.annotate(
+        same_tags=Count('tags'),
+    ).order_by('-same_tags', '-published')[:SIMILAR_POSTS_COUNT]
     return render(
         request=request,
         template_name='blog/post/detail.html',
         context={
             'post': post,
+            'similar_posts': similar_posts,
             'comments': comments,
             'form': form,
         },
